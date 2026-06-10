@@ -1,0 +1,34 @@
+server:
+  port: 8085
+  servlet:
+    context-path: /api/account
+management:
+  server:
+    port: 8185
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/postgres
+    username: postgres
+    password: password
+  liquibase:
+    default-schema: account
+    change-log: db.changelog/db.changelog-master.yaml
+    enabled: ${LIQUIBASE_ENABLED:true}
+    drop-first: ${LIQUIBASE_DROP_FIRST:false}
+  application:
+    name: account-app
+  cloud:
+    kubernetes:
+      discovery:
+        enabled: true
+      config:
+        enabled: true
+      reload:
+        enabled: true
