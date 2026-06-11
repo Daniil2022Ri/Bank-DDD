@@ -15,7 +15,6 @@ import org.bouncycastle.asn1.cms.TimeStampedData;
 @Entity
 @Table(name = "Account_User" , schema = "Account")
 @Data
-@AllArgsConstructor
 public class AccountEntity {
 
     @Id

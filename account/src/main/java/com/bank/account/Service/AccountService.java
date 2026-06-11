@@ -1,8 +1,10 @@
 package com.bank.account.Service;
 
+import com.bank.account.Dto.AccountDto;
+
 public interface AccountService {
 
-    double findBalanceAccountUser(Long userId);
+    AccountDto findBalanceAccountUser(Long userId);
 
 
 }

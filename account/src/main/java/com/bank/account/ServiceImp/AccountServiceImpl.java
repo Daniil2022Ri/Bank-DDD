@@ -8,25 +8,23 @@ import com.bank.account.Service.AccountService;
 
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final MapperAccount mapperAccount;
 
-    public AccountServiceImpl(AccountRepository accountRepository, MapperAccount mapperAccount) {
-        this.accountRepository = accountRepository;
-        this.mapperAccount = mapperAccount;
-    }
 
     @Override
-    public double findBalanceAccountUser(Long userId) {
-
-        AccountEntity accountEntity = accountRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("Аккаунт с таким ID не найден"));
-        AccountDto accountDto = mapperAccount.accountEntityToDto(accountEntity);
-        return accountDto.getBalanceAccount();
-
+    public AccountDto findBalanceAccountUser(Long userId) {
+        AccountEntity accountEntity = accountRepository.findById(userId).orElseThrow(() ->
+                new EntityNotFoundException("Аккаунт с ID " + userId + " Не найден" ));
+        return mapperAccount.accountEntityToDto(accountEntity);
     }
 }
