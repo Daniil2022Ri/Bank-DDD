@@ -5,11 +5,16 @@ import com.bank.account.Entity.Status;
 import com.bank.account.Entity.Type;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.bouncycastle.asn1.cms.TimeStampedData;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
+@Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class AccountDto {
 
 
@@ -20,8 +25,8 @@ public class AccountDto {
     private Currency currencyAccount;
     private Status statusAccount;
     private Type statusTypeAccount;
-    private TimeStampedData createAt;
-    private TimeStampedData updateAt;
+    private LocalDateTime createAt;
+    private LocalDateTime updateAt;
 
 
 

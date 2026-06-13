@@ -1,34 +1,41 @@
 package com.bank.account.Entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Column;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import org.bouncycastle.asn1.cms.TimeStampedData;
+import lombok.NoArgsConstructor;
+
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Account_User" , schema = "Account")
+@Table(name = "Account_User" , schema = "account_bd")
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class AccountEntity {
 
     @Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "profile_id")
+    @Column(name = "profile_id" , nullable = false)
     private Long profileId;
 
-    @Column(name = "account_Number" , nullable = false)
+    @Column(name = "account_Number" , nullable = false , length = 20)
     private int accountNumber;
 
     @Column(name = "balance_Account")
-    private double balanceAccount;
+    private BigDecimal balanceAccount;
 
     @Column(name = "currency_Account")
     private Currency currencyAccount;
@@ -40,11 +47,10 @@ public class AccountEntity {
     private Type statusTypeAccount;
 
     @Column(name = "create_At" , nullable = false)
-    private TimeStampedData createAt;
+    private LocalDateTime createAt;
 
     @Column(name = "update_At")
-    private TimeStampedData updateAt;
-
+    private LocalDateTime updateAt;
 
 
 
