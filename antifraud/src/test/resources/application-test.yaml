@@ -1,0 +1,24 @@
+server:
+  port: 0
+  servlet:
+    context-path: ""
+spring:
+  datasource:
+    url: jdbc:h2:mem:antifraud;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;INIT=CREATE SCHEMA IF NOT EXISTS anti_fraud\;SET SCHEMA anti_fraud
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: anti_fraud
+  liquibase:
+    default-schema: anti_fraud
+    change-log: db/changelog/db.changelog-master.yaml
+    enabled: true
+management:
+  server:
+    port: 0
