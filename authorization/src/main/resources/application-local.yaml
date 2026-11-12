@@ -18,14 +18,25 @@ spring:
     username: postgres
     password: password
     driver-class-name: org.postgresql.Driver
+    hikari:
+      connection-init-sql: CREATE SCHEMA IF NOT EXISTS auth
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: auth
   liquibase:
-    default-schema: authorization
+    default-schema: auth
     change-log: db/changelog/db.changelog-master.yaml
-    enabled: true
-    drop-first: false
+    enabled: ${LIQUIBASE_ENABLED:true}
+    drop-first: ${LIQUIBASE_DROP_FIRST:false}
   application:
     name: authorization-app
+jwt:
+  secret: ${JWT_SECRET:bank-ddd-local-jwt-secret-key-32-bytes-min}
+  lifetime: PT1H
+eureka:
+  client:
+    enabled: false

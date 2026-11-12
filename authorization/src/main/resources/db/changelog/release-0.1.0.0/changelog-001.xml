@@ -31,9 +31,9 @@
         </createTable>
     </changeSet>
     <changeSet author="Sergey" id="1672955805601-2">
-        <createTable remarks="аутентифицированный пользователь" tableName="user">
+        <createTable remarks="аутентифицированный пользователь" tableName="users">
             <column autoIncrement="true" name="id" remarks="технический идентификатор" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="user_pkey"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="users_pkey"/>
             </column>
             <column name="role" remarks="роль" type="VARCHAR(40)">
                 <constraints nullable="false"/>
@@ -47,6 +47,6 @@
         </createTable>
     </changeSet>
     <changeSet author="Sergey" id="1672955805601-3">
-        <addUniqueConstraint columnNames="password" constraintName="user_password_key" tableName="user"/>
+        <addUniqueConstraint columnNames="password" constraintName="users_password_key" tableName="users"/>
     </changeSet>
 </databaseChangeLog>
