@@ -14,9 +14,16 @@ management:
         include: '*'
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/postgres
+    url: jdbc:postgresql://localhost:5433/postgres?currentSchema=account
     username: postgres
     password: password
+    hikari:
+      connection-init-sql: CREATE SCHEMA IF NOT EXISTS account
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: account
   liquibase:
     default-schema: account
     change-log: db.changelog/db.changelog-master.yaml
@@ -24,11 +31,3 @@ spring:
     drop-first: ${LIQUIBASE_DROP_FIRST:false}
   application:
     name: account-app
-  cloud:
-    kubernetes:
-      discovery:
-        enabled: true
-      config:
-        enabled: true
-      reload:
-        enabled: true
