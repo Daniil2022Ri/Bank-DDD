@@ -9,17 +9,25 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.example</groupId>
     <artifactId>public-info</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>public-info</name>
-    <description>public-info</description>
+    <description>public-info microservice</description>
 
     <properties>
         <java.version>17</java.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
