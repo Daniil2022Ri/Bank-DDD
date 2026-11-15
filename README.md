@@ -4,7 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?logo=apachemaven&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-207%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-246%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-80.3%25%20lines-brightgreen)
 ![Checkstyle](https://img.shields.io/badge/checkstyle-0%20violations-success)
 
@@ -129,6 +129,7 @@ Swagger UI из коробки и Unit/Web/Integration тесты.
 | Безопасность | Spring Security, JWT (jjwt), BCrypt |
 | Аудит | Spring AOP, Jackson |
 | Качество | JUnit 5, Mockito, AssertJ, MockMvc, H2, Checkstyle, JaCoCo |
+| Фронтенд | React 18, TypeScript, Vite, React Router, Vitest + Testing Library |
 | Сборка | Maven (multi-module) |
 
 ---
@@ -208,6 +209,49 @@ java -jar account/target/account-0.0.1-SNAPSHOT.jar \
 
 ---
 
+## 🖥 MVP-фронтенд (профиль)
+
+В `frontend/` лежит небольшой SPA на **React + TypeScript + Vite** — личный кабинет
+клиента для работы с профилем. Это не «ещё один проект», а витрина бэкенда:
+вход через `authorization`, CRUD профиля через `profile`.
+
+**Что умеет:**
+
+- вход и регистрация (JWT, сессия в `localStorage`);
+- список профилей и карточка выбранного: контакты, паспорт, адрес регистрации;
+- создание профиля в 3 шага: регистрация → паспорт → профиль (+ фактический адрес);
+- редактирование контактов и удаление профиля;
+- прокси Vite на `authorization` (8087) и `profile` (8089), поэтому CORS не нужен.
+
+**Запуск:**
+
+```bash
+# терминал 1: нужные сервисы
+java -jar authorization/target/authorization-0.0.1-SNAPSHOT.jar
+java -jar profile/target/profile-0.0.1-SNAPSHOT.jar
+
+# терминал 2: фронтенд
+cd frontend
+pnpm install      # или npm install
+pnpm dev          # или npm run dev
+```
+
+Открыть <http://localhost:5173> — там форма входа. Зарегистрируй нового клиента
+(например, ID профиля `100`, пароль `secret123`) и создай профиль.
+
+**Команды:**
+
+```bash
+pnpm test         # 39 тестов: валидация, API-клиент, экраны логина и профилей
+pnpm build        # production-сборка в frontend/dist
+pnpm typecheck    # строгая проверка TypeScript
+```
+
+Дев-сервер проксирует `/api/authorization` → `localhost:8087` и `/api/profile` →
+`localhost:8089`. Для другого окружения задаются `VITE_AUTH_URL` и `VITE_PROFILE_URL`.
+
+---
+
 ## 🧪 Тесты и качество
 
 ### Как гонять
@@ -215,6 +259,9 @@ java -jar account/target/account-0.0.1-SNAPSHOT.jar \
 ```bash
 mvn test        # только тесты
 mvn verify      # тесты + Checkstyle + JaCoCo + сборка jar
+
+cd frontend
+pnpm test       # тесты фронтенда (Vitest + Testing Library)
 ```
 
 ### Что проверяется
@@ -308,7 +355,8 @@ Bank-DDD/
 ├── history/                # агрегация аудита
 ├── profile/                # паспорт, регистрации, профиль
 ├── public-info/            # банк, отделения, банкоматы, лицензии
-└── transfer/               # переводы
+├── transfer/               # переводы
+└── frontend/               # MVP-кабинет клиента (React + Vite + TS)
 ```
 
 Внутри каждого модуля:
@@ -349,11 +397,12 @@ src/test/java/                     # unit + web + integration тесты
 
 ## 🗺 Что дальше
 
+- [x] MVP-фронт под профиль (React + Vite + TS) с тестами;
 - [ ] Dockerfile для каждого сервиса + единый `docker-compose` со всеми сервисами;
 - [ ] API Gateway и service discovery (Eureka) вместо прямых портов;
 - [ ] Kafka для событий аудита вместо синхронных записей;
 - [ ] Проверка JWT на всех сервисах (resource-server с общим секретом);
-- [ ] CI на GitHub Actions: `mvn verify` + публикация JaCoCo-отчёта;
+- [ ] CI на GitHub Actions: `mvn verify` + `pnpm test` + публикация JaCoCo-отчёта;
 - [ ] Перевод `account_number` в `VARCHAR(20)` и пагинация списков.
 
 ---
