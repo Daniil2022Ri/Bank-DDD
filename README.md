@@ -140,8 +140,8 @@ Swagger UI из коробки и Unit/Web/Integration тесты.
 
 - **JDK 17+** (проект собирается и на JDK 21);
 - **Maven 3.9+**;
-- **PostgreSQL 14+** — локально или в Docker;
-- (опционально) Docker / Docker Desktop для базы.
+- **PostgreSQL 14+** — локально;
+- (опционально) **Docker Desktop** — чтобы поднять базу или весь стек одной командой.
 
 ### 1. База данных
 
@@ -193,7 +193,20 @@ java -jar account/target/account-0.0.1-SNAPSHOT.jar \
 
 Аналогично для остальных сервисов (меняется только `currentSchema`).
 
-### 4. Swagger
+### 4. Всё в Docker (альтернатива ручному запуску)
+
+Если установлен Docker Desktop (с WSL2), собирать и запускать сервисы вручную не нужно:
+
+```bash
+docker compose up --build
+```
+
+Поднимется PostgreSQL (порт `5433`), все семь сервисов (`8085`–`8092`) и фронтенд на
+<http://localhost:3000>. Nginx внутри фронта проксирует `/api/authorization` и
+`/api/profile` на нужные контейнеры, поэтому CORS не требуется. Схемы и таблицы
+создаются автоматически при старте сервисов.
+
+### 5. Swagger
 
 У каждого сервиса своя документация:
 
@@ -390,15 +403,16 @@ src/test/java/                     # unit + web + integration тесты
   доверяют шлюзу и не дублируют проверку токена.
 - **`account_number`** по исходной схеме — `BIGINT`, поэтому реальные 20-значные номера
   в него не влезают; в тестах используются 19-значные. В планах — `VARCHAR(20)`.
-- **Docker-деплой сервисов** пока не добавлен: в репозитории есть только PostgreSQL
-  в `docker-compose.yml`. Dockerfile'ы для приложений — следующий шаг.
+- **Docker**: в репозитории есть multi-stage `Dockerfile` (сборка через `--build-arg MODULE=...`),
+  `frontend/Dockerfile` с nginx и `docker-compose.yml` со всеми сервисами, PostgreSQL и фронтом.
+  На машине без Docker/WSL2 запуск не проверялся — нужен Docker Desktop.
 
 ---
 
 ## 🗺 Что дальше
 
 - [x] MVP-фронт под профиль (React + Vite + TS) с тестами;
-- [ ] Dockerfile для каждого сервиса + единый `docker-compose` со всеми сервисами;
+- [x] Dockerfile для каждого сервиса + единый `docker-compose` со всеми сервисами;
 - [ ] API Gateway и service discovery (Eureka) вместо прямых портов;
 - [ ] Kafka для событий аудита вместо синхронных записей;
 - [ ] Проверка JWT на всех сервисах (resource-server с общим секретом);

@@ -1,13 +1,152 @@
-version: '3.7'
-services:
+name: bank-ddd
 
-  # Environment
+services:
   bank-db:
-    image: postgres
-    hostname: bank-db
-    ports:
-      - 5433:5432
+    image: postgres:16-alpine
+    container_name: bank-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - bank-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
+  account:
+    build:
+      context: .
+      args:
+        MODULE: account
+    container_name: account
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=account
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8085:8085"
+      - "8185:8185"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  antifraud:
+    build:
+      context: .
+      args:
+        MODULE: antifraud
+    container_name: antifraud
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=anti_fraud
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8086:8086"
+      - "8186:8186"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  authorization:
+    build:
+      context: .
+      args:
+        MODULE: authorization
+    container_name: authorization
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      JWT_SECRET: bank-ddd-docker-jwt-secret-key-32-bytes-min
+    ports:
+      - "8087:8087"
+      - "8187:8187"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  history:
+    build:
+      context: .
+      args:
+        MODULE: history
+    container_name: history
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=history
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8088:8088"
+      - "8188:8188"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  profile:
+    build:
+      context: .
+      args:
+        MODULE: profile
+    container_name: profile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=profile
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8089:8089"
+      - "8189:8189"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  public-info:
+    build:
+      context: .
+      args:
+        MODULE: public-info
+    container_name: public-info
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=public_info
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8091:8091"
+      - "8190:8190"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  transfer:
+    build:
+      context: .
+      args:
+        MODULE: transfer
+    container_name: transfer
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://bank-db:5432/postgres?currentSchema=transfer
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8092:8092"
+      - "8191:8191"
+    depends_on:
+      bank-db:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - authorization
+      - profile
+
+volumes:
+  bank-db-data:
