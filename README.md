@@ -7,6 +7,7 @@
 ![Tests](https://img.shields.io/badge/tests-246%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-80.3%25%20lines-brightgreen)
 ![Checkstyle](https://img.shields.io/badge/checkstyle-0%20violations-success)
+![CI](https://github.com/Daniil2022Ri/Bank-DDD/actions/workflows/ci.yml/badge.svg)
 
 > Учебный pet-проект: банковская система, разбитая на семь микросервисов.
 > Цель — пройти полный путь от схемы БД до работающего REST API: DDD-разделение,
@@ -68,6 +69,22 @@ flowchart LR
 
 Такой проект — отличный тренажёр: здесь есть и чистые CRUD-сервисы, и безопасность,
 и межсервисные ссылки, и работа с деньгами, и аудит.
+
+---
+
+## 📸 Скриншоты
+
+**Вход и регистрация** — JWT через `authorization`:
+
+![Экран входа](docs/screenshots/login.png)
+
+**Личный кабинет** — список профилей и карточка клиента с паспортом и адресом:
+
+![Личный кабинет](docs/screenshots/profiles.png)
+
+**Создание профиля** — визард из трёх шагов:
+
+![Создание профиля](docs/screenshots/wizard.png)
 
 ---
 
@@ -302,6 +319,20 @@ pnpm test       # тесты фронтенда (Vitest + Testing Library)
 
 ---
 
+## ⚙️ CI (GitHub Actions)
+
+На каждый push и pull request в `main`/`develop` запускается
+[workflow `ci.yml`](.github/workflows/ci.yml) из двух джоб:
+
+| Джоба | Что делает |
+|---|---|
+| **Backend** | JDK 17 + Maven, `mvn clean verify` (207 тестов, Checkstyle, JaCoCo-гейт), публикует отчёт покрытия и jar'ы артефактами |
+| **Frontend** | Node 22 + pnpm, `pnpm install --frozen-lockfile`, `typecheck`, 39 тестов, production-сборка |
+
+Статус — в бейдже сверху и на вкладке **Actions** репозитория.
+
+---
+
 ## 📡 Примеры запросов
 
 ### Регистрация и логин
@@ -359,9 +390,12 @@ curl -X POST http://localhost:8091/api/public-info/banks \
 
 ```
 Bank-DDD/
+├── .github/workflows/      # CI: Maven verify + фронтенд-тесты
+├── docs/screenshots/       # скриншоты интерфейса для README
 ├── pom.xml                 # родительский POM: версии, плагины, JaCoCo/Checkstyle
 ├── checkstyle.xml          # правила стиля
-├── docker-compose.yml      # PostgreSQL для локальной разработки
+├── Dockerfile              # образ любого сервиса (--build-arg MODULE=...)
+├── docker-compose.yml      # PostgreSQL + 7 сервисов + фронтенд
 ├── account/                # счета
 ├── antifraud/              # подозрительные переводы
 ├── authorization/          # пользователи и JWT
@@ -413,10 +447,10 @@ src/test/java/                     # unit + web + integration тесты
 
 - [x] MVP-фронт под профиль (React + Vite + TS) с тестами;
 - [x] Dockerfile для каждого сервиса + единый `docker-compose` со всеми сервисами;
+- [x] CI на GitHub Actions: `mvn verify` + `pnpm test` + артефакты JaCoCo;
 - [ ] API Gateway и service discovery (Eureka) вместо прямых портов;
 - [ ] Kafka для событий аудита вместо синхронных записей;
 - [ ] Проверка JWT на всех сервисах (resource-server с общим секретом);
-- [ ] CI на GitHub Actions: `mvn verify` + `pnpm test` + публикация JaCoCo-отчёта;
 - [ ] Перевод `account_number` в `VARCHAR(20)` и пагинация списков.
 
 ---
