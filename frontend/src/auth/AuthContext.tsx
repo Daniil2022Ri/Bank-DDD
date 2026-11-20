@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 import type { AuthSession } from '../types';
-
-const STORAGE_KEY = 'bank-ddd.session';
+import { clearSession, loadSession, saveSession } from './session';
 
 interface AuthContextValue {
   session: AuthSession | null;
@@ -11,32 +10,16 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readSession(): AuthSession | null {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-    const parsed = JSON.parse(raw) as Partial<AuthSession>;
-    if (typeof parsed.token === 'string' && typeof parsed.profileId === 'number') {
-      return { token: parsed.token, profileId: parsed.profileId, role: parsed.role ?? 'ROLE_USER' };
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<AuthSession | null>(() => readSession());
+  const [session, setSession] = useState<AuthSession | null>(() => loadSession());
 
   const signIn = useCallback((next: AuthSession) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    saveSession(next);
     setSession(next);
   }, []);
 
   const signOut = useCallback(() => {
-    localStorage.removeItem(STORAGE_KEY);
+    clearSession();
     setSession(null);
   }, []);
 

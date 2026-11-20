@@ -4,7 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.2-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14%2B-4169E1?logo=postgresql&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9-C71A36?logo=apachemaven&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-246%20passed-brightgreen)
+![Tests](https://img.shields.io/badge/tests-255%20passed-brightgreen)
 ![Coverage](https://img.shields.io/badge/coverage-80.3%25%20lines-brightgreen)
 ![Checkstyle](https://img.shields.io/badge/checkstyle-0%20violations-success)
 ![CI](https://github.com/Daniil2022Ri/Bank-DDD/actions/workflows/ci.yml/badge.svg)
@@ -40,15 +40,16 @@
 
 ```mermaid
 flowchart LR
-    U[Клиент / фронтенд] --> AUTH[authorization<br/>JWT, пользователи]
-    U --> PROF[profile<br/>паспорт, регистрация]
-    U --> ACC[account<br/>банковские счета]
-    U --> TR[transfer<br/>переводы]
-    U --> AF[antifraud<br/>подозрительные переводы]
-    U --> HIST[history<br/>агрегация аудита]
-    U --> PI[public-info<br/>банк, отделения, банкоматы]
+    U[Клиент / фронтенд] --> GW[gateway<br/>:8080, JWT-фильтр]
+    GW --> AUTH[authorization<br/>JWT, пользователи]
+    GW --> PROF[profile<br/>паспорт, регистрация]
+    GW --> ACC[account<br/>банковские счета]
+    GW --> TR[transfer<br/>переводы]
+    GW --> AF[antifraud<br/>подозрительные переводы]
+    GW --> HIST[history<br/>агрегация аудита]
+    GW --> PI[public-info<br/>банк, отделения, банкоматы]
 
-    AUTH -. JWT .-> U
+    AUTH -. JWT .-> GW
     ACC -. аудит .-> HIST
     TR -. аудит .-> HIST
     AF -. аудит .-> HIST
@@ -90,11 +91,14 @@ flowchart LR
 
 ## 🏗 Архитектура
 
-Семь независимых Spring Boot приложений, каждое со своей схемой в одной базе PostgreSQL
-(в реальном проде — свои базы, для пет-проекта удобнее одна):
+Семь сервисов и один API-шлюз — независимые Spring Boot приложения, каждое со своей
+схемой в одной базе PostgreSQL (в реальном проде — свои базы, для пет-проекта удобнее одна).
+Все внешние запросы идут через **gateway** на `:8080`, который проверяет JWT и проксирует
+запросы в нужный сервис:
 
 | Сервис | Порт | Context path | Схема БД | Ответственность | Тесты |
 |---|---|---|---|---|---|
+| `gateway` | 8080 | — | — | единая точка входа, JWT-фильтр | 9 |
 | `account` | 8085 | `/api/account` | `account` | банковские счета | 29 |
 | `antifraud` | 8086 | `/api/anti-fraud` | `anti_fraud` | подозрительные переводы | 37 |
 | `authorization` | 8087 | `/api/authorization` | `auth` | пользователи, роли, JWT | 35 |
@@ -103,7 +107,7 @@ flowchart LR
 | `public-info` | 8091 | `/api/public-info` | `public_info` | банк, отделения, банкоматы | 21 |
 | `transfer` | 8092 | `/api/transfer` | `transfer` | переводы по счёту/карте/телефону | 24 |
 
-У каждого сервиса отдельный порт для Actuator (`8185`, `8186`, `8187`, `8188`, `8189`, `8190`, `8191`),
+У каждого сервиса отдельный порт для Actuator (`8180` у gateway, далее `8185`–`8191`),
 так что метрики и health-check не мешают бизнес-API.
 
 ---
@@ -183,7 +187,7 @@ docker compose up -d
 mvn clean verify
 ```
 
-Команда прогонит **207 тестов**, Checkstyle, JaCoCo (порог 60% строк) и соберёт
+Команда прогонит **216 тестов**, Checkstyle, JaCoCo (порог 60% строк) и соберёт
 исполняемые jar'ы в `*/target/`.
 
 ### 3. Запуск сервисов
@@ -191,6 +195,7 @@ mvn clean verify
 Если база в Docker (порт 5433) — достаточно:
 
 ```bash
+java -jar gateway/target/gateway-0.0.1-SNAPSHOT.jar
 java -jar account/target/account-0.0.1-SNAPSHOT.jar
 java -jar antifraud/target/antifraud-0.0.1-SNAPSHOT.jar
 java -jar authorization/target/authorization-0.0.1-SNAPSHOT.jar
@@ -199,6 +204,11 @@ java -jar profile/target/profile-0.0.1-SNAPSHOT.jar
 java -jar public-info/target/public-info-0.0.1-SNAPSHOT.jar
 java -jar transfer/target/transfer-0.0.1-SNAPSHOT.jar
 ```
+
+После этого все API доступны через единый вход **http://localhost:8080**:
+`/api/authorization/**`, `/api/profile/**`, `/api/account/**` и т.д. Gateway проверяет
+JWT (кроме `POST /api/authorization/auth` и `POST /api/authorization/users`) и
+проксирует запрос в нужный сервис.
 
 Если база локальная на `5432` (пароль `1111`), переопредели параметры подключения:
 
@@ -218,10 +228,9 @@ java -jar account/target/account-0.0.1-SNAPSHOT.jar \
 docker compose up --build
 ```
 
-Поднимется PostgreSQL (порт `5433`), все семь сервисов (`8085`–`8092`) и фронтенд на
-<http://localhost:3000>. Nginx внутри фронта проксирует `/api/authorization` и
-`/api/profile` на нужные контейнеры, поэтому CORS не требуется. Схемы и таблицы
-создаются автоматически при старте сервисов.
+Поднимется PostgreSQL (порт `5433`), gateway (`8080`), все сервисы (`8085`–`8092`)
+и фронтенд на <http://localhost:3000>. Nginx внутри фронта проксирует `/api/` на
+gateway, поэтому CORS не требуется. Схемы и таблицы создаются автоматически.
 
 ### 5. Swagger
 
@@ -243,22 +252,23 @@ docker compose up --build
 
 В `frontend/` лежит небольшой SPA на **React + TypeScript + Vite** — личный кабинет
 клиента для работы с профилем. Это не «ещё один проект», а витрина бэкенда:
-вход через `authorization`, CRUD профиля через `profile`.
+вход через `authorization`, CRUD профиля через `profile`, все запросы — через `gateway`.
 
 **Что умеет:**
 
-- вход и регистрация (JWT, сессия в `localStorage`);
+- вход и регистрация (JWT, сессия в `localStorage`, токен уходит в `Authorization`);
 - список профилей и карточка выбранного: контакты, паспорт, адрес регистрации;
 - создание профиля в 3 шага: регистрация → паспорт → профиль (+ фактический адрес);
 - редактирование контактов и удаление профиля;
-- прокси Vite на `authorization` (8087) и `profile` (8089), поэтому CORS не нужен.
+- прокси Vite на gateway (`8080`), поэтому CORS не нужен.
 
 **Запуск:**
 
 ```bash
-# терминал 1: нужные сервисы
+# терминал 1: сервисы и шлюз
 java -jar authorization/target/authorization-0.0.1-SNAPSHOT.jar
 java -jar profile/target/profile-0.0.1-SNAPSHOT.jar
+java -jar gateway/target/gateway-0.0.1-SNAPSHOT.jar
 
 # терминал 2: фронтенд
 cd frontend
@@ -272,13 +282,14 @@ pnpm dev          # или npm run dev
 **Команды:**
 
 ```bash
-pnpm test         # 39 тестов: валидация, API-клиент, экраны логина и профилей
+pnpm test         # 43 теста: валидация, API-клиент, сессия, экраны логина и профилей
 pnpm build        # production-сборка в frontend/dist
 pnpm typecheck    # строгая проверка TypeScript
 ```
 
-Дев-сервер проксирует `/api/authorization` → `localhost:8087` и `/api/profile` →
-`localhost:8089`. Для другого окружения задаются `VITE_AUTH_URL` и `VITE_PROFILE_URL`.
+Дев-сервер проксирует `/api` → `http://localhost:8080` (gateway), а тот уже
+распределяет запросы по сервисам. Для другого окружения задаются `VITE_AUTH_URL`
+и `VITE_PROFILE_URL`.
 
 ---
 
@@ -326,8 +337,8 @@ pnpm test       # тесты фронтенда (Vitest + Testing Library)
 
 | Джоба | Что делает |
 |---|---|
-| **Backend** | JDK 17 + Maven, `mvn clean verify` (207 тестов, Checkstyle, JaCoCo-гейт), публикует отчёт покрытия и jar'ы артефактами |
-| **Frontend** | Node 22 + pnpm, `pnpm install --frozen-lockfile`, `typecheck`, 39 тестов, production-сборка |
+| **Backend** | JDK 17 + Maven, `mvn clean verify` (216 тестов, Checkstyle, JaCoCo-гейт), публикует отчёт покрытия и jar'ы артефактами |
+| **Frontend** | Node 22 + pnpm, `pnpm install --frozen-lockfile`, `typecheck`, 43 теста, production-сборка |
 
 Статус — в бейдже сверху и на вкладке **Actions** репозитория.
 
@@ -399,6 +410,7 @@ Bank-DDD/
 ├── account/                # счета
 ├── antifraud/              # подозрительные переводы
 ├── authorization/          # пользователи и JWT
+├── gateway/                # Spring Cloud Gateway + JWT-фильтр
 ├── history/                # агрегация аудита
 ├── profile/                # паспорт, регистрации, профиль
 ├── public-info/            # банк, отделения, банкоматы, лицензии
@@ -433,8 +445,9 @@ src/test/java/                     # unit + web + integration тесты
 - **`authorization`**: схема `auth` и таблица `users`, потому что `authorization`/`user` —
   зарезервированные слова PostgreSQL/H2; это сознательное решение, чтобы миграции
   работали и на PostgreSQL, и на H2 в тестах.
-- **JWT** выдаёт и проверяет `authorization`; остальные сервисы в этом пет-проекте
-  доверяют шлюзу и не дублируют проверку токена.
+- **JWT** проверяется в `gateway` для всех `/api/**`, кроме логина и регистрации;
+  при успехе gateway прокидывает `X-User-Id` и `X-User-Role` в сервисы. Сервисы
+  по-прежнему можно дёрнуть напрямую по портам, но в Docker они доступны только через шлюз.
 - **`account_number`** по исходной схеме — `BIGINT`, поэтому реальные 20-значные номера
   в него не влезают; в тестах используются 19-значные. В планах — `VARCHAR(20)`.
 - **Docker**: в репозитории есть multi-stage `Dockerfile` (сборка через `--build-arg MODULE=...`),
@@ -448,7 +461,8 @@ src/test/java/                     # unit + web + integration тесты
 - [x] MVP-фронт под профиль (React + Vite + TS) с тестами;
 - [x] Dockerfile для каждого сервиса + единый `docker-compose` со всеми сервисами;
 - [x] CI на GitHub Actions: `mvn verify` + `pnpm test` + артефакты JaCoCo;
-- [ ] API Gateway и service discovery (Eureka) вместо прямых портов;
+- [x] API Gateway (Spring Cloud Gateway + JWT-фильтр) — единая точка входа;
+- [ ] Eureka/service discovery вместо статических URI в gateway;
 - [ ] Kafka для событий аудита вместо синхронных записей;
 - [ ] Проверка JWT на всех сервисах (resource-server с общим секретом);
 - [ ] Перевод `account_number` в `VARCHAR(20)` и пагинация списков.

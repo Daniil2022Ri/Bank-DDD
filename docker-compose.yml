@@ -138,6 +138,33 @@ services:
       bank-db:
         condition: service_healthy
 
+  gateway:
+    build:
+      context: .
+      args:
+        MODULE: gateway
+    container_name: gateway
+    environment:
+      AUTHORIZATION_URI: http://authorization:8087
+      PROFILE_URI: http://profile:8089
+      ACCOUNT_URI: http://account:8085
+      ANTIFRAUD_URI: http://antifraud:8086
+      TRANSFER_URI: http://transfer:8092
+      HISTORY_URI: http://history:8088
+      PUBLIC_INFO_URI: http://public-info:8091
+      JWT_SECRET: bank-ddd-docker-jwt-secret-key-32-bytes-min
+    ports:
+      - "8080:8080"
+      - "8180:8180"
+    depends_on:
+      - authorization
+      - profile
+      - account
+      - antifraud
+      - transfer
+      - history
+      - public-info
+
   frontend:
     build:
       context: ./frontend
@@ -145,8 +172,7 @@ services:
     ports:
       - "3000:80"
     depends_on:
-      - authorization
-      - profile
+      - gateway
 
 volumes:
   bank-db-data:

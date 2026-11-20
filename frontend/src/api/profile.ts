@@ -1,14 +1,19 @@
 import { request } from './client';
+import { getToken } from '../auth/session';
 import type { Passport, Profile, Registration } from '../types';
 
 export const PROFILE_BASE = import.meta.env.VITE_PROFILE_URL ?? '/api/profile';
 
+function authToken(): string | null {
+  return getToken();
+}
+
 export function listProfiles(): Promise<Profile[]> {
-  return request<Profile[]>('/profiles', { baseUrl: PROFILE_BASE });
+  return request<Profile[]>('/profiles', { baseUrl: PROFILE_BASE, token: authToken() });
 }
 
 export function getProfile(profileId: number): Promise<Profile> {
-  return request<Profile>(`/profiles/${profileId}`, { baseUrl: PROFILE_BASE });
+  return request<Profile>(`/profiles/${profileId}`, { baseUrl: PROFILE_BASE, token: authToken() });
 }
 
 export function createProfile(profile: Profile): Promise<Profile> {
@@ -16,6 +21,7 @@ export function createProfile(profile: Profile): Promise<Profile> {
     method: 'POST',
     body: profile,
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
@@ -24,6 +30,7 @@ export function updateProfile(profileId: number, profile: Profile): Promise<Prof
     method: 'PUT',
     body: profile,
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
@@ -31,6 +38,7 @@ export function deleteProfile(profileId: number): Promise<void> {
   return request<void>(`/profiles/${profileId}`, {
     method: 'DELETE',
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
@@ -39,11 +47,15 @@ export function createRegistration(registration: Registration): Promise<Registra
     method: 'POST',
     body: registration,
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
 export function getRegistration(registrationId: number): Promise<Registration> {
-  return request<Registration>(`/registrations/${registrationId}`, { baseUrl: PROFILE_BASE });
+  return request<Registration>(`/registrations/${registrationId}`, {
+    baseUrl: PROFILE_BASE,
+    token: authToken(),
+  });
 }
 
 export function createActualRegistration(registration: Registration): Promise<Registration> {
@@ -51,6 +63,7 @@ export function createActualRegistration(registration: Registration): Promise<Re
     method: 'POST',
     body: registration,
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
@@ -59,9 +72,10 @@ export function createPassport(passport: Passport): Promise<Passport> {
     method: 'POST',
     body: passport,
     baseUrl: PROFILE_BASE,
+    token: authToken(),
   });
 }
 
 export function getPassport(passportId: number): Promise<Passport> {
-  return request<Passport>(`/passports/${passportId}`, { baseUrl: PROFILE_BASE });
+  return request<Passport>(`/passports/${passportId}`, { baseUrl: PROFILE_BASE, token: authToken() });
 }
